@@ -10,5 +10,9 @@ export const env = {
     "mongodb://127.0.0.1:27017/video_sensitivity_assignment",
   jwtSecret: process.env.JWT_SECRET || "development-secret",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
-  uploadDir: process.env.UPLOAD_DIR || "uploads"
+  uploadDir: process.env.UPLOAD_DIR || "uploads",
+  processedDir: process.env.PROCESSED_DIR || "processed",
+  cdnBaseUrl: process.env.CDN_BASE_URL || "",
+  ffmpegPath: process.env.FFMPEG_PATH || "ffmpeg",
+  ffprobePath: process.env.FFPROBE_PATH || "ffprobe"
 };

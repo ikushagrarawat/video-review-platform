@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../api/client";
 import AdminPanel from "../components/AdminPanel.jsx";
+import CategoryManager from "../components/CategoryManager.jsx";
 import FilterPanel from "../components/FilterPanel.jsx";
 import Header from "../components/Header";
 import UploadForm from "../components/UploadForm";
@@ -34,6 +35,8 @@ export default function DashboardPage() {
   const [users, setUsers] = useState([]);
   const [adminError, setAdminError] = useState("");
   const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [categoryError, setCategoryError] = useState("");
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
 
   if (!user) {
     return null;
@@ -101,9 +104,10 @@ export default function DashboardPage() {
       setVideos((currentVideos) => [response.data.video, ...currentVideos]);
       setSelectedVideoId(response.data.video._id);
       setCategories((current) =>
-        current.includes(response.data.video.category)
+        current.some((category) => category.name === response.data.video.category)
           ? current
-          : [...current, response.data.video.category].sort()
+          : [...current, { id: response.data.video.category, name: response.data.video.category }]
+              .sort((left, right) => left.name.localeCompare(right.name))
       );
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Upload failed");
@@ -138,6 +142,27 @@ export default function DashboardPage() {
     }
   };
 
+  const handleCreateCategory = async (name) => {
+    if (!name.trim()) {
+      return;
+    }
+
+    try {
+      setIsCreatingCategory(true);
+      setCategoryError("");
+      const response = await api.post("/categories", { name });
+      setCategories((current) =>
+        [...current, response.data.category].sort((left, right) =>
+          left.name.localeCompare(right.name)
+        )
+      );
+    } catch (requestError) {
+      setCategoryError(requestError.response?.data?.message || "Unable to create category");
+    } finally {
+      setIsCreatingCategory(false);
+    }
+  };
+
   return (
     <main className="dashboard-shell">
       <Header user={user} onLogout={logout} />
@@ -147,6 +172,7 @@ export default function DashboardPage() {
             canUpload={["editor", "admin"].includes(user.role)}
             isSubmitting={isUploading}
             onSubmit={handleUpload}
+            categories={categories}
           />
           <FilterPanel
             filters={filters}
@@ -190,6 +216,13 @@ export default function DashboardPage() {
               error={adminError}
             />
           ) : null}
+          <CategoryManager
+            categories={categories}
+            canManage={["editor", "admin"].includes(user.role)}
+            onCreateCategory={handleCreateCategory}
+            isCreating={isCreatingCategory}
+            error={categoryError}
+          />
         </div>
         <VideoPlayerPanel apiBase={apiBase} token={token} video={selectedVideo} />
       </section>

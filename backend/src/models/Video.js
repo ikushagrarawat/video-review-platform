@@ -33,9 +33,17 @@ const videoSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    processedPath: {
+      type: String,
+      default: ""
+    },
     storedFileName: {
       type: String,
       required: true
+    },
+    processedFileName: {
+      type: String,
+      default: ""
     },
     mimeType: {
       type: String,
@@ -48,6 +56,22 @@ const videoSchema = new mongoose.Schema(
     durationSeconds: {
       type: Number,
       default: 0
+    },
+    width: {
+      type: Number,
+      default: 0
+    },
+    height: {
+      type: Number,
+      default: 0
+    },
+    bitrateKbps: {
+      type: Number,
+      default: 0
+    },
+    streamUrl: {
+      type: String,
+      default: ""
     },
     originalFileName: {
       type: String,

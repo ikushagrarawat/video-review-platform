@@ -7,6 +7,7 @@ import { registerSocketHandlers } from "./services/socketService.js";
 
 const bootstrap = async () => {
   fs.mkdirSync(path.resolve(env.uploadDir), { recursive: true });
+  fs.mkdirSync(path.resolve(env.processedDir), { recursive: true });
   await connectDatabase();
   registerSocketHandlers(io);
 

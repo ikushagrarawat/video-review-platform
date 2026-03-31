@@ -54,8 +54,8 @@ export default function FilterPanel({ filters, onChange, onReset, categories }) 
           >
             <option value="">all</option>
             {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
+              <option key={category.id || category.name} value={category.name}>
+                {category.name}
               </option>
             ))}
           </select>

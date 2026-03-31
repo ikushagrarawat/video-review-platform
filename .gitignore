@@ -5,3 +5,6 @@ coverage
 .DS_Store
 backend/uploads/*
 !backend/uploads/.gitkeep
+backend/processed/*
+!backend/processed/.gitkeep
+github-profile/

@@ -1,10 +1,12 @@
 import fs from "fs";
 import path from "path";
+import Category from "../models/Category.js";
 import Video from "../models/Video.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { httpError } from "../utils/httpError.js";
 import { io } from "../app.js";
 import { queueVideoProcessing } from "../services/videoProcessingService.js";
+import { buildPublicVideoUrl } from "../services/storageService.js";
 
 const buildVideoFilter = (req) => {
   const filter = { organizationId: req.user.organizationId };
@@ -99,12 +101,41 @@ export const listVideos = asyncHandler(async (req, res) => {
     .populate("ownerId", "name email role")
     .sort({ createdAt: -1 });
 
-  res.json({ videos });
+  res.json({
+    videos: videos.map((video) => ({
+      ...video.toObject(),
+      streamUrl: video.streamUrl || buildPublicVideoUrl(video._id)
+    }))
+  });
 });
 
 export const listCategories = asyncHandler(async (req, res) => {
-  const categories = await Video.distinct("category", buildVideoFilter(req));
-  res.json({ categories: categories.filter(Boolean).sort() });
+  const [storedCategories, videoCategories] = await Promise.all([
+    Category.find({ organizationId: req.user.organizationId }).sort({ name: 1 }),
+    Video.distinct("category", buildVideoFilter(req))
+  ]);
+
+  const merged = new Map();
+
+  for (const category of storedCategories) {
+    merged.set(category.name, {
+      id: category._id,
+      name: category.name,
+      source: "managed"
+    });
+  }
+
+  for (const categoryName of videoCategories.filter(Boolean)) {
+    if (!merged.has(categoryName)) {
+      merged.set(categoryName, {
+        id: categoryName,
+        name: categoryName,
+        source: "from-videos"
+      });
+    }
+  }
+
+  res.json({ categories: [...merged.values()] });
 });
 
 export const getVideoById = asyncHandler(async (req, res) => {
@@ -138,7 +169,7 @@ export const streamVideo = asyncHandler(async (req, res) => {
     throw httpError("You do not have access to this stream", 403);
   }
 
-  const filePath = path.resolve(video.uploadPath);
+  const filePath = path.resolve(video.processedPath || video.uploadPath);
   const stat = fs.statSync(filePath);
   const fileSize = stat.size;
   const range = req.headers.range;
@@ -146,7 +177,9 @@ export const streamVideo = asyncHandler(async (req, res) => {
   if (!range) {
     res.writeHead(200, {
       "Content-Length": fileSize,
-      "Content-Type": video.mimeType
+      "Content-Type": video.mimeType,
+      "Cache-Control": "public, max-age=3600",
+      ETag: `"${video._id}-${fileSize}"`
     });
     fs.createReadStream(filePath).pipe(res);
     return;
@@ -161,7 +194,9 @@ export const streamVideo = asyncHandler(async (req, res) => {
     "Content-Range": `bytes ${start}-${end}/${fileSize}`,
     "Accept-Ranges": "bytes",
     "Content-Length": chunkSize,
-    "Content-Type": video.mimeType
+    "Content-Type": video.mimeType,
+    "Cache-Control": "public, max-age=3600",
+    ETag: `"${video._id}-${fileSize}"`
   });
 
   fs.createReadStream(filePath, { start, end }).pipe(res);

@@ -7,15 +7,18 @@ Submission-focused full-stack MVP for the assignment brief. The app covers:
 - Multi-tenant data isolation via `organizationId`
 - Video upload with Multer
 - duration capture and richer metadata storage
-- Mock sensitivity analysis pipeline with Socket.io progress updates
+- FFmpeg-backed processing pipeline with Socket.io progress updates
 - Video listing, metadata display, and advanced filtering
 - HTTP range request streaming endpoint
 - Admin tenant-user management
+- Tenant-managed categories
+- Deployment artifacts for Docker and Render
 - React + Vite dashboard for upload, monitoring, and playback
 
 ## Tech Stack
 
 - Backend: Node.js, Express, MongoDB, Mongoose, Socket.io, Multer, JWT
+- Media: FFmpeg / FFprobe
 - Frontend: React, Vite, Axios, Socket.io client
 - Storage: local disk uploads
 
@@ -39,6 +42,7 @@ frontend/
     hooks/
     pages/
     styles/
+docs/
 ```
 
 ## Local Setup
@@ -48,8 +52,9 @@ frontend/
 1. Copy `backend/.env.example` to `backend/.env`
 2. Install dependencies with `npm install`
 3. Start MongoDB locally or update the Atlas connection string
-4. Seed demo users with `npm run seed`
-5. Run the API with `npm run dev`
+4. Install FFmpeg locally if it is not already available
+5. Seed demo users with `npm run seed`
+6. Run the API with `npm run dev`
 
 ### Frontend
 
@@ -70,18 +75,20 @@ Three demo accounts use tenant `acme`; `editor@beta.test` is in tenant `beta` to
 
 - Full-stack architecture: Express + MongoDB + React + Vite
 - Video management: upload, metadata, list, secure access
-- Sensitivity processing: mock automated analysis with safe/flagged result
+- Sensitivity processing: FFmpeg-backed streaming preparation plus rule-based safe/flagged classification
 - Realtime updates: Socket.io progress events
 - Streaming service: HTTP range requests in `/api/videos/:videoId/stream`
 - Access control: role-based permissions and tenant filtering
 - Metadata filtering: date, size, duration, category, status, sensitivity, text search
 - Admin management: create and list users inside the current tenant
+- Custom categories: tenant-managed category library
+- Deployment readiness: Dockerfiles, Compose setup, Render config, and dedicated docs
 
 ## Assumptions and Tradeoffs
 
-- Sensitivity analysis is mocked with deterministic keyword rules to keep the MVP deliverable inside a 48-hour window.
+- Sensitivity classification is still rule-based and not computer-vision driven.
 - Local disk storage is used instead of S3 for speed of implementation.
-- Compression, CDN, and true transcoding remain future improvements.
+- CDN rollout and cloud object storage remain future improvements.
 - Tenant isolation is modeled through `organizationId`; a fuller production version would add organization management screens and stricter audit logging.
 
 ## Completion Snapshot
@@ -94,24 +101,35 @@ Three demo accounts use tenant `acme`; `editor@beta.test` is in tenant `beta` to
 - Upload, list, stream, and progress-tracking flow
 - Metadata filtering and category support
 - Admin tenant user-management panel
+- FFmpeg-backed metadata extraction and streaming preparation
+- Architecture, API, user-guide, design-decision, deployment, and demo-script docs
 
 ### Partial
 
-- Sensitivity analysis is mock logic, not frame-level scanning
-- Duration capture is client-side metadata based, not FFmpeg extraction
+- Sensitivity analysis is rule-based, not frame-level scanning or ML-based moderation
 - Multi-tenant support is enforced in app logic, but not backed by full org administration screens
 
 ### Pending / Future Work
 
-- Real FFmpeg processing and compression presets
-- CDN and caching strategy
+- CDN rollout in front of processed assets
 - Cloud object storage integration
-- Deployment, API docs, and recorded product demo
+- Background job queue for media workers
+- Public deployment execution on a live hosting account
+- Recorded product demo
 
 ## Suggested Interview Talking Points
 
-- Why a mock processing queue was chosen over FFmpeg-heavy analysis for the MVP
+- Why FFmpeg is used for streaming preparation while sensitivity classification remains rule-based
 - How tenant isolation is enforced at the query layer
 - Why HTTP range requests are required for browser-friendly streaming
 - How Socket.io improves UX during long-running processing jobs
 - What would be upgraded first for production: cloud storage, background jobs, scanning service, caching
+
+## Supporting Docs
+
+- [Architecture](./docs/ARCHITECTURE.md)
+- [API](./docs/API.md)
+- [User Guide](./docs/USER_GUIDE.md)
+- [Design Decisions](./docs/DESIGN_DECISIONS.md)
+- [Deployment](./docs/DEPLOYMENT.md)
+- [Demo Script](./docs/DEMO_SCRIPT.md)

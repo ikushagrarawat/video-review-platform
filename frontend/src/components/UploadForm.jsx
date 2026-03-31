@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 
-export default function UploadForm({ canUpload, onSubmit, isSubmitting }) {
+export default function UploadForm({
+  canUpload,
+  onSubmit,
+  isSubmitting,
+  categories = []
+}) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("general");
@@ -57,7 +62,16 @@ export default function UploadForm({ canUpload, onSubmit, isSubmitting }) {
       </label>
       <label>
         Category
-        <input value={category} onChange={(event) => setCategory(event.target.value)} />
+        <input
+          list="category-options"
+          value={category}
+          onChange={(event) => setCategory(event.target.value)}
+        />
+        <datalist id="category-options">
+          {categories.map((option) => (
+            <option key={option.id || option.name} value={option.name} />
+          ))}
+        </datalist>
       </label>
       <label>
         Duration (auto-detected seconds)
