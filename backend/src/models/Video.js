@@ -45,6 +45,14 @@ const videoSchema = new mongoose.Schema(
       type: String,
       default: ""
     },
+    originalObjectKey: {
+      type: String,
+      default: ""
+    },
+    processedObjectKey: {
+      type: String,
+      default: ""
+    },
     mimeType: {
       type: String,
       required: true
@@ -72,6 +80,11 @@ const videoSchema = new mongoose.Schema(
     streamUrl: {
       type: String,
       default: ""
+    },
+    storageProvider: {
+      type: String,
+      enum: ["local", "s3"],
+      default: "local"
     },
     originalFileName: {
       type: String,

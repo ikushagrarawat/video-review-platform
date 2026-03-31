@@ -18,5 +18,9 @@ export const env = {
   processedDir: process.env.PROCESSED_DIR || "processed",
   cdnBaseUrl: process.env.CDN_BASE_URL || "",
   ffmpegPath: process.env.FFMPEG_PATH || "ffmpeg",
-  ffprobePath: process.env.FFPROBE_PATH || "ffprobe"
+  ffprobePath: process.env.FFPROBE_PATH || "ffprobe",
+  awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+  awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
+  awsRegion: process.env.AWS_REGION || "",
+  s3BucketName: process.env.S3_BUCKET_NAME || ""
 };

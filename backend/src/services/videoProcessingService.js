@@ -1,6 +1,12 @@
 import fs from "fs";
 import path from "path";
 import Video from "../models/Video.js";
+import {
+  buildCloudFrontUrl,
+  buildObjectKey,
+  isCloudStorageConfigured,
+  uploadFileToCloud
+} from "./cloudStorageService.js";
 import { isMediaToolingAvailable, probeVideoMetadata, transcodeForStreaming } from "./mediaService.js";
 import { emitVideoProgress } from "./socketService.js";
 import { buildPublicVideoUrl, resolveProcessedOutput } from "./storageService.js";
@@ -45,7 +51,7 @@ export const queueVideoProcessing = async ({ io, video }) => {
         status: "ready",
         sensitivity: detectSensitivity(video),
         analysisNotes: `Fallback automated review completed for ${path.basename(video.originalFileName)}`,
-        streamUrl: buildPublicVideoUrl(video._id)
+        streamUrl: video.streamUrl || buildPublicVideoUrl(video._id)
       });
 
       emitProgress(io, video, {
@@ -75,20 +81,40 @@ export const queueVideoProcessing = async ({ io, video }) => {
 
     const stat = fs.statSync(processedPath);
     const sensitivity = detectSensitivity(video, processedMetadata);
+    let processedObjectKey = "";
+    let streamUrl = buildPublicVideoUrl(video._id);
+    let storageProvider = video.storageProvider || "local";
+
+    if (isCloudStorageConfigured()) {
+      processedObjectKey = buildObjectKey({
+        type: "processed",
+        fileName: processedFileName
+      });
+      await uploadFileToCloud({
+        filePath: processedPath,
+        objectKey: processedObjectKey,
+        contentType: "video/mp4"
+      });
+      streamUrl = buildCloudFrontUrl(processedObjectKey);
+      storageProvider = "s3";
+    }
+
     const updatedVideo = await updateVideoState(video._id, {
       progress: 100,
       status: "ready",
       sensitivity,
       processedFileName,
       processedPath,
+      processedObjectKey,
       durationSeconds: processedMetadata.durationSeconds || originalMetadata.durationSeconds,
       width: processedMetadata.width || originalMetadata.width,
       height: processedMetadata.height || originalMetadata.height,
       bitrateKbps: processedMetadata.bitrateKbps || originalMetadata.bitrateKbps,
       sizeInBytes: stat.size,
       mimeType: "video/mp4",
+      storageProvider,
       analysisNotes: `FFmpeg processing completed and streaming asset prepared for ${path.basename(video.originalFileName)}`,
-      streamUrl: buildPublicVideoUrl(video._id)
+      streamUrl
     });
 
     emitProgress(io, video, {

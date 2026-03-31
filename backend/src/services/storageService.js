@@ -1,9 +1,9 @@
 import path from "path";
 import { env } from "../config/env.js";
 
-export const buildPublicVideoUrl = (videoId, token) => {
-  if (env.cdnBaseUrl) {
-    return `${env.cdnBaseUrl.replace(/\/$/, "")}/${videoId}.mp4`;
+export const buildPublicVideoUrl = (videoId, token, explicitUrl = "") => {
+  if (explicitUrl) {
+    return explicitUrl;
   }
 
   return `/api/videos/${videoId}/stream${token ? `?token=${token}` : ""}`;

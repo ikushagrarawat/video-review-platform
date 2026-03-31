@@ -10,7 +10,12 @@ export default function VideoPlayerPanel({ apiBase, token, video, canRetry, onRe
     );
   }
 
-  const isPlayable = video.status === "ready" && (video.processedPath || video.uploadPath);
+  const resolvedStreamUrl =
+    video.streamUrl && /^https?:\/\//.test(video.streamUrl)
+      ? video.streamUrl
+      : `${apiBase}/videos/${video._id}/stream?token=${token}`;
+  const isPlayable =
+    video.status === "ready" && (video.streamUrl || video.processedPath || video.uploadPath);
 
   return (
     <section className="panel player-panel">
@@ -29,7 +34,7 @@ export default function VideoPlayerPanel({ apiBase, token, video, canRetry, onRe
           key={video._id}
           controls
           className="player"
-          src={`${apiBase}/videos/${video._id}/stream?token=${token}`}
+          src={resolvedStreamUrl}
         />
       ) : (
         <div className="player empty-player">

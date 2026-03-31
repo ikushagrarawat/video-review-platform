@@ -7,6 +7,13 @@ import { httpError } from "../utils/httpError.js";
 import { io } from "../app.js";
 import { queueVideoProcessing } from "../services/videoProcessingService.js";
 import { buildPublicVideoUrl } from "../services/storageService.js";
+import {
+  buildCloudFrontUrl,
+  buildObjectKey,
+  deleteCloudObject,
+  isCloudStorageConfigured,
+  uploadFileToCloud
+} from "../services/cloudStorageService.js";
 
 const buildVideoFilter = (req) => {
   const filter = { organizationId: req.user.organizationId };
@@ -75,6 +82,24 @@ export const uploadVideo = asyncHandler(async (req, res) => {
     throw httpError("Video file is required", 400);
   }
 
+  let originalObjectKey = "";
+  let streamUrl = "";
+  let storageProvider = "local";
+
+  if (isCloudStorageConfigured()) {
+    originalObjectKey = buildObjectKey({
+      type: "original",
+      fileName: req.file.filename
+    });
+    await uploadFileToCloud({
+      filePath: req.file.path,
+      objectKey: originalObjectKey,
+      contentType: req.file.mimetype
+    });
+    storageProvider = "s3";
+    streamUrl = buildCloudFrontUrl(originalObjectKey);
+  }
+
   const video = await Video.create({
     title: req.body.title || req.file.originalname,
     description: req.body.description || "",
@@ -85,6 +110,9 @@ export const uploadVideo = asyncHandler(async (req, res) => {
     sizeInBytes: req.file.size,
     durationSeconds: Number(req.body.durationSeconds || 0),
     originalFileName: req.file.originalname,
+    originalObjectKey,
+    storageProvider,
+    streamUrl,
     organizationId: req.user.organizationId,
     ownerId: req.user._id,
     status: "processing",
@@ -187,6 +215,11 @@ export const deleteVideo = asyncHandler(async (req, res) => {
     }
   }
 
+  await Promise.all([
+    deleteCloudObject(video.originalObjectKey),
+    deleteCloudObject(video.processedObjectKey)
+  ]);
+
   await Video.deleteOne({ _id: video._id });
 
   res.json({ message: "Video deleted" });
@@ -218,13 +251,19 @@ export const reprocessVideo = asyncHandler(async (req, res) => {
     }
   }
 
+  const previousProcessedObjectKey = video.processedObjectKey;
+
   video.status = "processing";
   video.progress = 5;
   video.sensitivity = "pending";
   video.analysisNotes = "Reprocessing requested";
   video.processedPath = "";
   video.processedFileName = "";
-  video.streamUrl = "";
+  video.processedObjectKey = "";
+  video.streamUrl = video.originalObjectKey
+    ? buildCloudFrontUrl(video.originalObjectKey)
+    : "";
+  await deleteCloudObject(previousProcessedObjectKey);
   await video.save();
 
   queueVideoProcessing({ io, video });
