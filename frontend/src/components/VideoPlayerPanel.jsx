@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function VideoPlayerPanel({ apiBase, token, video }) {
+export default function VideoPlayerPanel({ apiBase, token, video, canRetry, onRetry, isRetrying }) {
   if (!video) {
     return (
       <section className="panel player-panel empty-state">
@@ -38,6 +38,11 @@ export default function VideoPlayerPanel({ apiBase, token, video }) {
               ? "This video failed during processing and is not playable."
               : "This video is still processing or the file is unavailable."}
           </p>
+          {canRetry ? (
+            <button className="ghost-button" disabled={isRetrying} onClick={() => onRetry(video._id)}>
+              {isRetrying ? "Retrying..." : "Retry processing"}
+            </button>
+          ) : null}
         </div>
       )}
       <div className="detail-grid">

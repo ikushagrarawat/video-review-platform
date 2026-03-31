@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const [categoryError, setCategoryError] = useState("");
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [deletingVideoId, setDeletingVideoId] = useState("");
+  const [retryingVideoId, setRetryingVideoId] = useState("");
 
   if (!user) {
     return null;
@@ -177,6 +178,22 @@ export default function DashboardPage() {
     }
   };
 
+  const handleRetryVideo = async (videoId) => {
+    try {
+      setRetryingVideoId(videoId);
+      const response = await api.post(`/videos/${videoId}/reprocess`);
+      setVideos((current) =>
+        current.map((video) => (video._id === videoId ? response.data.video : video))
+      );
+      setSelectedVideoId(videoId);
+      setError("");
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Unable to retry processing");
+    } finally {
+      setRetryingVideoId("");
+    }
+  };
+
   return (
     <main className="dashboard-shell">
       <Header user={user} onLogout={logout} />
@@ -218,6 +235,9 @@ export default function DashboardPage() {
                   canDelete={["editor", "admin"].includes(user.role)}
                   onDelete={handleDeleteVideo}
                   isDeleting={deletingVideoId === video._id}
+                  canRetry={["editor", "admin"].includes(user.role) && video.status !== "processing"}
+                  onRetry={handleRetryVideo}
+                  isRetrying={retryingVideoId === video._id}
                 />
               ))}
               {!videos.length ? (
@@ -241,7 +261,18 @@ export default function DashboardPage() {
             error={categoryError}
           />
         </div>
-        <VideoPlayerPanel apiBase={apiBase} token={token} video={selectedVideo} />
+        <VideoPlayerPanel
+          apiBase={apiBase}
+          token={token}
+          video={selectedVideo}
+          canRetry={
+            !!selectedVideo &&
+            ["editor", "admin"].includes(user.role) &&
+            selectedVideo.status !== "processing"
+          }
+          onRetry={handleRetryVideo}
+          isRetrying={retryingVideoId === selectedVideo?._id}
+        />
       </section>
     </main>
   );

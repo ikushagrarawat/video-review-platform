@@ -13,7 +13,9 @@ Submission-focused full-stack MVP for the assignment brief. The app covers:
 - Admin tenant-user management
 - Tenant-managed categories
 - Delete-video support for cleanup of unavailable or outdated records
+- Retry-processing support for failed or unavailable videos
 - Deployment artifacts for Docker and Render
+- Vercel SPA rewrite config for direct-route support
 - React + Vite dashboard for upload, monitoring, and playback
 
 ## Tech Stack
@@ -84,6 +86,7 @@ Three demo accounts use tenant `acme`; `editor@beta.test` is in tenant `beta` to
 - Admin management: create and list users inside the current tenant
 - Custom categories: tenant-managed category library
 - Maintenance workflow: delete stale or unavailable video records from the dashboard
+- Recovery workflow: retry processing for videos that fail or become unavailable
 - Deployment readiness: Dockerfiles, Compose setup, Render config, and dedicated docs
 
 ## Assumptions and Tradeoffs

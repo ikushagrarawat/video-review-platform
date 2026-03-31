@@ -15,14 +15,23 @@ export const app = express();
 export const httpServer = createServer(app);
 export const io = new Server(httpServer, {
   cors: {
-    origin: env.clientUrl,
+    origin: env.clientUrls,
     credentials: true
   }
 });
 
+const corsOrigin = (origin, callback) => {
+  if (!origin || env.clientUrls.includes(origin)) {
+    callback(null, true);
+    return;
+  }
+
+  callback(new Error("CORS origin not allowed"));
+};
+
 app.use(
   cors({
-    origin: env.clientUrl,
+    origin: corsOrigin,
     credentials: true
   })
 );

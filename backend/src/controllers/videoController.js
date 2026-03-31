@@ -192,6 +192,46 @@ export const deleteVideo = asyncHandler(async (req, res) => {
   res.json({ message: "Video deleted" });
 });
 
+export const reprocessVideo = asyncHandler(async (req, res) => {
+  const video = await Video.findOne({
+    _id: req.params.videoId,
+    organizationId: req.user.organizationId
+  });
+
+  if (!video) {
+    throw httpError("Video not found", 404);
+  }
+
+  const canReprocess =
+    req.user.role === "admin" ||
+    String(video.ownerId) === String(req.user._id);
+
+  if (!canReprocess) {
+    throw httpError("You do not have permission to reprocess this video", 403);
+  }
+
+  if (video.processedPath && fs.existsSync(video.processedPath)) {
+    try {
+      fs.unlinkSync(video.processedPath);
+    } catch (error) {
+      console.warn("Unable to remove old processed asset", error.message);
+    }
+  }
+
+  video.status = "processing";
+  video.progress = 5;
+  video.sensitivity = "pending";
+  video.analysisNotes = "Reprocessing requested";
+  video.processedPath = "";
+  video.processedFileName = "";
+  video.streamUrl = "";
+  await video.save();
+
+  queueVideoProcessing({ io, video });
+
+  res.json({ video });
+});
+
 export const streamVideo = asyncHandler(async (req, res) => {
   const video = await Video.findOne({
     _id: req.params.videoId,
@@ -207,6 +247,9 @@ export const streamVideo = asyncHandler(async (req, res) => {
   }
 
   const filePath = path.resolve(video.processedPath || video.uploadPath);
+  if (!fs.existsSync(filePath)) {
+    throw httpError("Video file is unavailable on this environment", 404);
+  }
   const stat = fs.statSync(filePath);
   const fileSize = stat.size;
   const range = req.headers.range;

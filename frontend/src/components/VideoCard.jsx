@@ -6,7 +6,10 @@ export default function VideoCard({
   onSelect,
   canDelete,
   onDelete,
-  isDeleting
+  isDeleting,
+  canRetry,
+  onRetry,
+  isRetrying
 }) {
   return (
     <div className={`video-card-shell ${selectedVideoId === video._id ? "video-card--active" : ""}`}>
@@ -35,6 +38,16 @@ export default function VideoCard({
           type="button"
         >
           {isDeleting ? "Deleting..." : "Delete"}
+        </button>
+      ) : null}
+      {canRetry ? (
+        <button
+          className="ghost-button retry-button"
+          disabled={isRetrying}
+          onClick={() => onRetry(video._id)}
+          type="button"
+        >
+          {isRetrying ? "Retrying..." : "Retry processing"}
         </button>
       ) : null}
       {video.status === "failed" ? (

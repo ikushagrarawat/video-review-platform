@@ -248,6 +248,11 @@ select {
   margin-top: 0.4rem;
 }
 
+.retry-button {
+  width: 100%;
+  margin-top: 0.4rem;
+}
+
 .empty-state,
 .empty-copy,
 .error-text {
