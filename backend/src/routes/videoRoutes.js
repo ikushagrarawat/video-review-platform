@@ -1,0 +1,21 @@
+import { Router } from "express";
+import {
+  getVideoById,
+  listCategories,
+  listVideos,
+  streamVideo,
+  uploadVideo
+} from "../controllers/videoController.js";
+import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
+import { upload } from "../utils/storage.js";
+
+const router = Router();
+
+router.use(requireAuth);
+router.get("/", listVideos);
+router.get("/categories/options", listCategories);
+router.get("/:videoId", getVideoById);
+router.get("/:videoId/stream", streamVideo);
+router.post("/", requireRole("editor", "admin"), upload.single("video"), uploadVideo);
+
+export default router;
