@@ -142,16 +142,23 @@ select {
   margin-top: 1rem;
 }
 
-.video-card {
-  width: 100%;
-  text-align: left;
-  background: #fff9f4;
-  color: inherit;
+.video-card-shell {
   border: 1px solid #eaded1;
+  border-radius: 20px;
+  background: #fff9f4;
+  padding: 0.5rem;
 }
 
 .video-card--active {
   outline: 2px solid #17324d;
+}
+
+.video-card {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: inherit;
+  padding: 0.4rem;
 }
 
 .status-pill {
@@ -186,6 +193,13 @@ select {
   background: black;
   margin: 1rem 0;
   min-height: 320px;
+}
+
+.empty-player {
+  display: grid;
+  place-items: center;
+  color: white;
+  padding: 2rem;
 }
 
 .detail-grid {
@@ -227,6 +241,11 @@ select {
 
 .apply-button {
   width: 100%;
+}
+
+.delete-button {
+  width: 100%;
+  margin-top: 0.4rem;
 }
 
 .empty-state,

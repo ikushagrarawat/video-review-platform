@@ -155,6 +155,43 @@ export const getVideoById = asyncHandler(async (req, res) => {
   res.json({ video });
 });
 
+export const deleteVideo = asyncHandler(async (req, res) => {
+  const video = await Video.findOne({
+    _id: req.params.videoId,
+    organizationId: req.user.organizationId
+  });
+
+  if (!video) {
+    throw httpError("Video not found", 404);
+  }
+
+  const canDelete =
+    req.user.role === "admin" ||
+    String(video.ownerId) === String(req.user._id);
+
+  if (!canDelete) {
+    throw httpError("You do not have permission to delete this video", 403);
+  }
+
+  for (const filePath of [video.processedPath, video.uploadPath]) {
+    if (!filePath) {
+      continue;
+    }
+
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (error) {
+      console.warn("Unable to delete file during video cleanup", filePath, error.message);
+    }
+  }
+
+  await Video.deleteOne({ _id: video._id });
+
+  res.json({ message: "Video deleted" });
+});
+
 export const streamVideo = asyncHandler(async (req, res) => {
   const video = await Video.findOne({
     _id: req.params.videoId,

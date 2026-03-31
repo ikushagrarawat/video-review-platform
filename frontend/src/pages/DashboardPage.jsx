@@ -37,6 +37,7 @@ export default function DashboardPage() {
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [categoryError, setCategoryError] = useState("");
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [deletingVideoId, setDeletingVideoId] = useState("");
 
   if (!user) {
     return null;
@@ -163,6 +164,19 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDeleteVideo = async (videoId) => {
+    try {
+      setDeletingVideoId(videoId);
+      await api.delete(`/videos/${videoId}`);
+      setVideos((current) => current.filter((video) => video._id !== videoId));
+      setSelectedVideoId((current) => (current === videoId ? null : current));
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Unable to delete video");
+    } finally {
+      setDeletingVideoId("");
+    }
+  };
+
   return (
     <main className="dashboard-shell">
       <Header user={user} onLogout={logout} />
@@ -201,6 +215,9 @@ export default function DashboardPage() {
                   video={video}
                   selectedVideoId={selectedVideoId}
                   onSelect={setSelectedVideoId}
+                  canDelete={["editor", "admin"].includes(user.role)}
+                  onDelete={handleDeleteVideo}
+                  isDeleting={deletingVideoId === video._id}
                 />
               ))}
               {!videos.length ? (

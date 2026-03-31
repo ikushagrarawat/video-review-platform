@@ -12,6 +12,7 @@ Submission-focused full-stack MVP for the assignment brief. The app covers:
 - HTTP range request streaming endpoint
 - Admin tenant-user management
 - Tenant-managed categories
+- Delete-video support for cleanup of unavailable or outdated records
 - Deployment artifacts for Docker and Render
 - React + Vite dashboard for upload, monitoring, and playback
 
@@ -82,6 +83,7 @@ Three demo accounts use tenant `acme`; `editor@beta.test` is in tenant `beta` to
 - Metadata filtering: date, size, duration, category, status, sensitivity, text search
 - Admin management: create and list users inside the current tenant
 - Custom categories: tenant-managed category library
+- Maintenance workflow: delete stale or unavailable video records from the dashboard
 - Deployment readiness: Dockerfiles, Compose setup, Render config, and dedicated docs
 
 ## Assumptions and Tradeoffs

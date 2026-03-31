@@ -10,6 +10,8 @@ export default function VideoPlayerPanel({ apiBase, token, video }) {
     );
   }
 
+  const isPlayable = video.status === "ready" && (video.processedPath || video.uploadPath);
+
   return (
     <section className="panel player-panel">
       <div className="player-panel__header">
@@ -22,12 +24,22 @@ export default function VideoPlayerPanel({ apiBase, token, video }) {
           <span className={`status-pill status-pill--${video.sensitivity}`}>{video.sensitivity}</span>
         </div>
       </div>
-      <video
-        key={video._id}
-        controls
-        className="player"
-        src={`${apiBase}/videos/${video._id}/stream?token=${token}`}
-      />
+      {isPlayable ? (
+        <video
+          key={video._id}
+          controls
+          className="player"
+          src={`${apiBase}/videos/${video._id}/stream?token=${token}`}
+        />
+      ) : (
+        <div className="player empty-player">
+          <p>
+            {video.status === "failed"
+              ? "This video failed during processing and is not playable."
+              : "This video is still processing or the file is unavailable."}
+          </p>
+        </div>
+      )}
       <div className="detail-grid">
         <div>
           <strong>Description</strong>
@@ -52,6 +64,10 @@ export default function VideoPlayerPanel({ apiBase, token, video }) {
         <div>
           <strong>Analysis</strong>
           <p>{video.analysisNotes || "Pending automated review"}</p>
+        </div>
+        <div>
+          <strong>Delivery</strong>
+          <p>{video.streamUrl || "Stream URL will appear once processing completes"}</p>
         </div>
       </div>
     </section>

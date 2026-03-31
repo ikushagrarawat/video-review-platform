@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  deleteVideo,
   getVideoById,
   listCategories,
   listVideos,
@@ -16,6 +17,7 @@ router.get("/", listVideos);
 router.get("/categories/options", listCategories);
 router.get("/:videoId", getVideoById);
 router.get("/:videoId/stream", streamVideo);
+router.delete("/:videoId", requireRole("editor", "admin"), deleteVideo);
 router.post("/", requireRole("editor", "admin"), upload.single("video"), uploadVideo);
 
 export default router;
