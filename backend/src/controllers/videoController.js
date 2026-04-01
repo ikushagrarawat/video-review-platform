@@ -285,6 +285,11 @@ export const streamVideo = asyncHandler(async (req, res) => {
     throw httpError("You do not have access to this stream", 403);
   }
 
+  if (video.streamUrl && /^https?:\/\//.test(video.streamUrl)) {
+    res.redirect(302, video.streamUrl);
+    return;
+  }
+
   const filePath = path.resolve(video.processedPath || video.uploadPath);
   if (!fs.existsSync(filePath)) {
     throw httpError("Video file is unavailable on this environment", 404);
@@ -300,7 +305,16 @@ export const streamVideo = asyncHandler(async (req, res) => {
       "Cache-Control": "public, max-age=3600",
       ETag: `"${video._id}-${fileSize}"`
     });
-    fs.createReadStream(filePath).pipe(res);
+    const stream = fs.createReadStream(filePath);
+    stream.on("error", (error) => {
+      console.error("Streaming failed", error);
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Unable to stream video" });
+      } else {
+        res.destroy(error);
+      }
+    });
+    stream.pipe(res);
     return;
   }
 
@@ -318,5 +332,14 @@ export const streamVideo = asyncHandler(async (req, res) => {
     ETag: `"${video._id}-${fileSize}"`
   });
 
-  fs.createReadStream(filePath, { start, end }).pipe(res);
+  const stream = fs.createReadStream(filePath, { start, end });
+  stream.on("error", (error) => {
+    console.error("Range streaming failed", error);
+    if (!res.headersSent) {
+      res.status(500).json({ message: "Unable to stream video range" });
+    } else {
+      res.destroy(error);
+    }
+  });
+  stream.pipe(res);
 });

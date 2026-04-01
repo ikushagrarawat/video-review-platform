@@ -3,6 +3,10 @@ export const notFoundHandler = (req, res) => {
 };
 
 export const errorHandler = (error, _req, res, _next) => {
+  if (res.headersSent) {
+    return;
+  }
+
   const statusCode = error.statusCode || 500;
   res.status(statusCode).json({
     message: error.message || "Unexpected server error"
